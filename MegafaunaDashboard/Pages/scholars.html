@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Megafauna</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="CSS\style.css">
+</head>
+<body>
+    <header>
+        <img src="Images\WCSLogo.jpeg" alt="Left Image" class="header-img">
+        MegaFauna Scholar Data
+        <img src="Images\mars.png" alt="Right Image" class="header-img">
+    </header>
+    <div id="main-container">
+        <div id="map"></div>
+        <div id="details" class="details-panel">
+            <h2>Details</h2>
+            <div id="details-content"></div>
+        </div>
+    </div>
+    <div id="datatable-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Sno</th>
+                    <th>Phone no</th>
+                    <th>Time</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                    <th>Species</th>
+                    <th>Number</th>
+                    <th>Condition</th>
+                    <th>Status</th>
+                    <th>Fishing Gear</th>
+                    <th>Injury/Marks</th>
+                    <th>Remarks</th>
+                </tr>
+            </thead>
+            <tbody id="DataTable">
+                <!-- Data will be populated here by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.2.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.2.0/firebase-database.js"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.2.0/firebase-app.js";
+        import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.2.0/firebase-database.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyB8d6-lizpUdWxgw-jv1Vlxx4VAX922Pa8",
+            authDomain: "mega-fauna.firebaseapp.com",
+            databaseURL: "https://mega-fauna-default-rtdb.firebaseio.com/",
+            projectId: "mega-fauna",
+            storageBucket: "mega-fauna.appspot.com",
+            messagingSenderId: "407609253404",
+            appId: "1:407609253404:android:14e3d75a7af8b05cc549d9"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        let stdNo = 1;
+
+        // Initialize the map and set its view
+        const map = L.map('map').setView([22.9734, 78.6569], 5);
+
+        // Load and display tile layer on the map (OpenStreetMap)
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        async function fetchDataFromFolder(folderName) {
+            const dbRef = ref(database, folderName);
+            const snapshot = await get(dbRef);
+            if (snapshot.exists()) {
+                const items = [];
+                snapshot.forEach(childSnapshot => {
+                    const phone = childSnapshot.key; // Phone number (key of the subfolder)
+                    childSnapshot.forEach(grandChildSnapshot => {
+                        const data = grandChildSnapshot.val();
+                        const { yyyyMMddHHmm, Latitude, Longitude, Species, Number, Condition, Status, FishingGear, Injury, Remarks } = data;
+                        items.push({ User: folderName, Phone: phone, Time: yyyyMMddHHmm, Latitude, Longitude, Species, Number, Condition, Status, FishingGear, Injury, Remarks });
+                    });
+                });
+                return items;
+            } else {
+                console.log(`No data available in folder ${folderName}`);
+                return [];
+            }
+        }
+
+        async function fetchData() {
+            try {
+                const scholarData = await fetchDataFromFolder('scholar');
+                displayData(scholarData);
+                plotDataOnMap(scholarData);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        function displayData(data) {
+            const tbody = document.getElementById('DataTable');
+            tbody.innerHTML = "";
+            data.forEach(item => {
+                addItem(item.Phone, item.Time, item.Latitude, item.Longitude, item.Species, item.Number, item.Condition, item.Status, item.FishingGear, item.Injury, item.Remarks);
+            });
+        }
+
+        function addItem(Phone, Time, Lat, Long, Species, Number, Condition, Status, FishingGear, Injury, Remarks) {
+            const tbody = document.getElementById('DataTable');
+            const trow = document.createElement("tr");
+
+            // Create table cells
+            const cells = [
+                stdNo++,
+                Phone || '',
+                Time || '',
+                Lat || '',
+                Long || '',
+                Species || '',
+                Number || '',
+                Condition || '',
+                Status || '',
+                FishingGear || '',
+                Injury || '',
+                Remarks || ''
+            ];
+
+            // Append each cell to the row
+            cells.forEach(cellValue => {
+                const td = document.createElement('td');
+                td.textContent = cellValue;
+                trow.appendChild(td);
+            });
+
+            tbody.appendChild(trow);
+        }
+
+        function plotDataOnMap(data) {
+            data.forEach(item => {
+                if (item.Latitude && item.Longitude) {
+                    const marker = L.marker([item.Latitude, item.Longitude]).addTo(map);
+                    const title = `${item.Species} (Scholar)`;
+                    marker.bindPopup(`
+                        <b>${title}</b><br>
+                        <button onclick="showDetails('${title}', '${item.Phone}', '${item.Time}', '${item.Latitude}', '${item.Longitude}', '${item.Species}', '${item.Number}', '${item.Condition}', '${item.Status}', '${item.FishingGear}', '${item.Injury}', '${item.Remarks}')">Show Details</button>
+                    `);
+                }
+            });
+        }
+
+        // Function to display details about the location
+        window.showDetails = async function(title, phone, time, latitude, longitude, species, number, condition, status, fishingGear, injury, remarks) {
+            const detailsContent = document.getElementById('details-content');
+            detailsContent.innerHTML = ''; // Clear previous details
+            const detailEntry = document.createElement('div');
+            let content = `<h3>${title}</h3>`;
+            if (phone && phone !== 'undefined') content += `<p><b>Phone:</b> ${phone}</p>`;
+            if (time && time !== 'undefined') content += `<p><b>Time:</b> ${time}</p>`;
+            if (latitude && latitude !== 'undefined') content += `<p><b>Latitude:</b> ${latitude}</p>`;
+            if (longitude && longitude !== 'undefined') content += `<p><b>Longitude:</b> ${longitude}</p>`;
+            if (species && species !== 'undefined') content += `<p><b>Species:</b> ${species}</p>`;
+            if (number && number !== 'undefined') content += `<p><b>Number:</b> ${number}</p>`;
+            if (condition && condition !== 'undefined') content += `<p><b>Condition:</b> ${condition}</p>`;
+            if (status && status !== 'undefined') content += `<p><b>Status:</b> ${status}</p>`;
+            if (fishingGear && fishingGear !== 'undefined') content += `<p><b>Fishing Gear:</b> ${fishingGear}</p>`;
+            if (injury && injury !== 'undefined') content += `<p><b>Injury/Marks:</b> ${injury}</p>`;
+            if (remarks && remarks !== 'undefined') content += `<p><b>Remarks:</b> ${remarks}</p>`;
+    
+            // Fetch and display images from S3 bucket for the specific phone number
+            const response = await fetch(`http://localhost:3000/images?phone=${phone}`);
+            const imageUrls = await response.json();
+            imageUrls.forEach(url => {
+                content += `<div style="margin: 10px;"><img src="${url}" alt="Image" style="max-width: 300px; height: auto;" /></div>`;
+            });
+
+            detailEntry.innerHTML = content;
+            detailsContent.appendChild(detailEntry);
+        }
+
+        window.onload = fetchData;
+    </script>
+</body>
+</html>

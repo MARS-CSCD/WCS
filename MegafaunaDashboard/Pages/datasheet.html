@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE-edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Megafauna</title>
+    <link rel="stylesheet" href="CSS\datasheet.css">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.2.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.2.0/firebase-database.js"></script>
+</head>
+<body>
+    <h1>Scholars and Fishermen DataSheet</h1>
+    <div>
+        <table>
+            <thead>
+                <tr>
+                    <th>Sno</th>
+                    <th>User</th>
+                    <th>Phone no</th>
+                    <th>Time</th>
+                    <th>Latitude</th>
+                    <th>Longitude</th>
+                    <th>Species</th>
+                    <th>Number</th>
+                    <th>Condition</th>
+                    <th>Status</th>
+                    <th>Fishing Gear</th>
+                    <th>Injury/Marks</th>
+                    <th>Remarks</th>
+                </tr>
+            </thead>
+            <tbody id="DataTable">
+                <!-- Data will be populated here by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.2.0/firebase-app.js";
+        import { getDatabase, ref, get, onValue } from "https://www.gstatic.com/firebasejs/9.2.0/firebase-database.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyB8d6-lizpUdWxgw-jv1Vlxx4VAX922Pa8",
+            authDomain: "mega-fauna.firebaseapp.com",
+            databaseURL: "https://mega-fauna-default-rtdb.firebaseio.com/",
+            projectId: "mega-fauna",
+            storageBucket: "mega-fauna.appspot.com",
+            messagingSenderId: "407609253404",
+            appId: "1:407609253404:android:14e3d75a7af8b05cc549d9"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        let stdNo = 1;
+
+        function addItem(User, Phone, Time, Lat, Long, Species, Number, Condition, Status, FishingGear, Injury, Remarks) {
+            const tbody = document.getElementById('DataTable');
+            const trow = document.createElement("tr");
+
+            // Apply different background colors based on User type
+            if (User === 'scholar') {
+                trow.style.backgroundColor = 'lightblue';
+            } else if (User === 'fisherman') {
+                trow.style.backgroundColor = 'lightgreen';
+            }
+            
+            // Create table cells
+            const cells = [
+                stdNo++,
+                User || '',
+                Phone || '',
+                Time || '',
+                Lat || '',
+                Long || '',
+                Species || '',
+                Number || '',
+                Condition || '',
+                Status || '',
+                FishingGear || '',
+                Injury || '',
+                Remarks || ''
+            ];
+
+            // Append each cell to the row
+            cells.forEach(cellValue => {
+                const td = document.createElement('td');
+                td.textContent = cellValue;
+                trow.appendChild(td);
+            });
+
+            tbody.appendChild(trow);
+        }
+
+        async function fetchDataFromFolder(folderName) {
+            const dbRef = ref(database, folderName);
+            const snapshot = await get(dbRef);
+            if (snapshot.exists()) {
+                const items = [];
+                snapshot.forEach(childSnapshot => {
+                    const phone = childSnapshot.key; // Phone number (key of the subfolder)
+                    childSnapshot.forEach(grandChildSnapshot => {
+                        const data = grandChildSnapshot.val();
+                        const { yyyyMMddHHmm, Latitude, Longitude, Species, Number, Condition, Status, FishingGear, Injury, Remarks } = data;
+                        items.push({ User: folderName, Phone: phone, Time: yyyyMMddHHmm, Latitude, Longitude, Species, Number, Condition, Status, FishingGear, Injury, Remarks });
+                    });
+                });
+                return items;
+            } else {
+                console.log(`No data available in folder ${folderName}`);
+                return [];
+            }
+        }
+
+        async function fetchData() {
+            try {
+                const scholarData = await fetchDataFromFolder('scholar');
+                const fishermanData = await fetchDataFromFolder('fisherman');
+                const combinedData = [...scholarData, ...fishermanData];
+                displayData(combinedData);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        function displayData(data) {
+            const tbody = document.getElementById('DataTable');
+            tbody.innerHTML = "";
+            data.forEach(item => {
+                addItem(item.User, item.Phone, item.Time, item.Latitude, item.Longitude, item.Species, item.Number, item.Condition, item.Status, item.FishingGear, item.Injury, item.Remarks);
+            });
+        }
+
+        window.onload = fetchData;
+    </script>
+</body>
+</html>

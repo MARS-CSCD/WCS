@@ -1,0 +1,115 @@
+body {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 100%;
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    overflow-x: hidden;
+}
+
+header {
+    background-color: #004d99;
+    color: white;
+    padding: 20px;
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.header-img {
+    position: absolute;
+    top: 10px;
+    width: 50px;
+    height: 50px;
+}
+
+header img:first-child {
+    left: 10px;
+}
+
+header img:last-child {
+    right: 10px;
+}
+
+#main-container {
+    display: flex;
+    flex-direction: row;
+    width: calc(100% - 40px); /* Adjust for padding */
+    height: calc(100% - 80px); /* Subtract the height of the header */
+    overflow: hidden;
+    padding: 10px 20px; /* Equal gap on left and right sides */
+    gap: 10px; /* Add gap between the map and the detail panel */
+    box-sizing: border-box; /* Ensure padding is included in the total width */
+}
+
+#map {
+    flex: 1;
+    height: 100%;
+    margin-right: 10px; /* Add gap between the map and the detail panel */
+}
+
+.details-panel {
+    flex-basis: 400px;
+    height: 100%;
+    overflow-y: auto;
+    background-color: #f9f9f9;
+    border-left: 1px solid #ddd;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+}
+
+.details-panel h2 {
+    margin-top: 0;
+    background-color: #004d99;
+    color: white;
+    padding: 10px;
+    text-align: center;
+}
+
+.details-panel img {
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 10px;
+}
+
+#datatable-container {
+    width: calc(100% - 40px); /* Adjust for padding */
+    padding: 10px;
+    margin: 10px 20px; /* Equal gap margin on all sides */
+    overflow-y: auto;
+    border: 1px solid #ddd; /* Add border to the table container */
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    max-height: calc(40% - 20px); /* Fit table within remaining space */
+    box-sizing: border-box; /* Ensure padding is included in the total width */
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+th, td {
+    padding: 8px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #004d99;
+    color: white;
+}
+
+tbody tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+tbody tr:hover {
+    background-color: #ddd;
+}
