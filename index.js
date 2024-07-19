@@ -75,7 +75,7 @@ app1.get('/images', async (req, res) => {
 });
 
 // Route to get image URLs by phone number for the second app
-app2.get('/images', async (req, res) => {
+app2.get('/fisherman-images', async (req, res) => {
     const phone = req.query.phone;
     if (!phone) {
         return res.status(400).send('Phone number is required');
