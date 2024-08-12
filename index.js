@@ -8,8 +8,8 @@ const app2 = express();
 app1.use(cors());
 app2.use(cors());
 
-const port1 = 3000;
-const port2 = 3001;
+const port1 = 4000;
+const port2 = 4001;
 
 // AWS S3 configuration for both apps
 const s3Config1 = new AWS.S3({
